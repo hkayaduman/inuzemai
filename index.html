@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>İNÜZEM AI – Destek</title>
+<style>
+  :root{
+    --brand:#006d77;         /* ana renk */
+    --brand-2:#00a6b5;       /* vurgu */
+    --brand-dark:#014a51;
+    --glass: rgba(255,255,255,.12);
+    --ink:#0f172a;
+  }
+  html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Arial;}
+  body{background:linear-gradient(135deg,#eef5f7 0%,#f7fbff 100%);color:var(--ink)}
+
+  /* ---- Demo üst bölümü (opsiyonel) ---- */
+  .hero{
+    min-height:56vh;display:grid;place-items:center;text-align:center;padding:72px 16px;
+    background:radial-gradient(1200px 600px at 70% -10%, #b8e6eb33 0%, transparent 70%);
+  }
+  .hero h1{margin:0 0 10px;font-size:clamp(28px,4vw,44px);letter-spacing:.2px}
+  .hero p{margin:0;opacity:.8}
+
+  /* ---- FAB (sağ alt) modern ---- */
+  .fab-wrap{
+    position:fixed;right:20px;bottom:20px;z-index:9999;isolation:isolate;
+  }
+  .halo{
+  position:absolute;inset:-14px;border-radius:20px;filter:blur(14px);
+  background:conic-gradient(from 0deg, #00e0ff55, #00ffa855, #00e0ff55);
+  opacity:.0;transition:opacity .25s ease;
+  pointer-events:none;     /* <-- eklendi */
+  z-index:-1;              /* <-- eklendi (opsiyonel ama önerilir) */
+  }
+  .pulse{
+  position:absolute;inset:-2px;border-radius:16px;border:2px solid #7ef0ff55;
+  animation:pulse 2.4s ease-out infinite;pointer-events:none; /* <-- eklendi */
+  }
+  .fab{
+    width:66px;height:66px;border:none;border-radius:16px;cursor:pointer;
+    background:linear-gradient(180deg,var(--brand) 0%, var(--brand-dark) 100%);
+    color:#fff;display:grid;place-items:center;position:relative;
+    box-shadow:0 20px 36px rgba(0,0,0,.25), inset 0 0 0 1px #ffffff20;
+    transition:transform .14s ease, box-shadow .2s ease, background .3s ease;
+    overflow:hidden;
+  }
+  .fab::after{
+    content:"İNÜZEM AI";position:absolute;bottom:7px;left:50%;translate:-50% 0;
+    font-size:9px;letter-spacing:.3px;font-weight:800;opacity:.9;pointer-events:none;
+  }
+  .fab:hover{transform:translateY(-2px);box-shadow:0 26px 44px rgba(0,0,0,.28), inset 0 0 0 1px #ffffff30}
+  .fab:hover+.halo{opacity:.9}
+  .pulse{
+    position:absolute;inset:-2px;border-radius:16px;border:2px solid #7ef0ff55;
+    animation:pulse 2.4s ease-out infinite;pointer-events:none;
+  }
+  @keyframes pulse{0%{opacity:.7;transform:scale(.96)}100%{opacity:0;transform:scale(1.25)}}
+
+  /* SVG icon (stilize edilmiş İNÜZEM) */
+  .icon{width:28px;height:28px}
+  .icon .dot{fill:#fff}
+  .icon .bar{fill:#bff3ff}
+
+  /* ---- Chat sheet / balon ---- */
+  .sheet{
+    position:fixed;right:20px;bottom:100px;width:380px;max-width:92vw;max-height:74vh;
+    background:rgba(255,255,255,.8);backdrop-filter:blur(14px);
+    border:1px solid #e6eef3;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.25);
+    display:none;flex-direction:column;overflow:hidden;animation:drop .28s ease both;
+  }
+  .sheet.open{display:flex}
+  @keyframes drop{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
+
+  .top{
+    display:flex;align-items:center;gap:10px;padding:10px 12px;
+    background:linear-gradient(180deg,var(--brand) 0%,var(--brand-dark) 100%);
+    color:#fff;
+  }
+  .badge{
+    width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
+    background:radial-gradient(circle at 30% 30%, #e0ffff 0,#a0f0ff 35%,#2ab3c0 100%);
+    box-shadow:inset 0 0 0 2px #ffffff55;
+    font-weight:900;font-size:12px;letter-spacing:.3px;
+  }
+  .title{font-weight:800;letter-spacing:.3px}
+  .close{margin-left:auto;background:transparent;border:0;color:#fff;font-size:22px;cursor:pointer}
+  .sub{font-size:11px;opacity:.85;margin-left:6px}
+
+  .msgs{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:10px;background:linear-gradient(180deg,#ffffff 0,#f7fbff 100%)}
+  .msg{max-width:85%;padding:10px 12px;border-radius:12px;font-size:14px;line-height:1.35}
+  .me{background:#e0f4f2;border:1px solid #cce9e7;align-self:flex-end}
+  .bot{background:#f5f8ff;border:1px solid #e6ecfb}
+  .sys{background:#fff3f3;border:1px dashed #ffc9c9;color:#a11}
+
+  .composer{display:flex;gap:8px;padding:10px;border-top:1px solid #e6eef3;background:#fff}
+  .composer input{flex:1;padding:11px;border:1px solid #cbd5e1;border-radius:12px;font-size:14px}
+  .composer button{background:linear-gradient(180deg,#14b3c2,#0a8f9b);color:#fff;border:0;padding:11px 14px;border-radius:12px;cursor:pointer}
+  .hint{font-size:11px;color:#64748b;padding:6px 12px;text-align:center;border-top:1px dashed #e5e7eb}
+
+  /* small screens fix */
+  @media (max-width:380px){ .fab{width:62px;height:62px} .sheet{bottom:90px} }
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <div>
+    <h1>İNÜZEM AI – Hızlı Destek</h1>
+    <p>LMS giriş, ders içerikleri, ödev ve sınavlar için anında yanıt.</p>
+  </div>
+</section>
+
+<!-- Chat panel -->
+<div id="sheet" class="sheet" aria-live="polite">
+  <div class="top">
+    <div class="badge">AI</div>
+    <div class="title">İNÜZEM <span class="sub">asistan</span></div>
+    <button class="close" aria-label="Kapat" onclick="toggleChat(false)">×</button>
+  </div>
+
+  <div id="msgs" class="msgs">
+    <div class="msg bot">Merhaba 👋 Ben İNÜZEM AI. LMS ve uzaktan eğitim konularında yardımcı olabilirim.</div>
+  </div>
+
+  <form class="composer" onsubmit="sendMsg(event)">
+    <input id="text" autocomplete="off" placeholder="Sorunuzu yazın…" />
+    <button type="submit">Gönder</button>
+  </form>
+  <div class="hint">Sadece İNÜZEM &amp; LMS ile ilgili sorular yanıtlanır.</div>
+</div>
+
+<!-- Floating Button -->
+<div class="fab-wrap">
+  <button class="fab" id="fab" title="İNÜZEM AI" onclick="toggleChat()">
+    <!-- stylized people icon -->
+    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+      <circle class="dot" cx="8" cy="7" r="2"/>
+      <rect  class="bar" x="6" y="10" width="4" height="8" rx="2"/>
+      <circle class="dot" cx="16" cy="7" r="2"/>
+      <rect  class="bar" x="14" y="10" width="4" height="8" rx="2"/>
+      <circle class="dot" cx="12" cy="5" r="1.6"/>
+      <rect  class="bar" x="10.5" y="8" width="3" height="10" rx="1.5"/>
+    </svg>
+    <span class="pulse" aria-hidden="true"></span>
+  </button>
+  <span class="halo" aria-hidden="true"></span>
+</div>
+
+<script>
+  // === CONFIG ===
+  const WEBHOOK_URL = "https://n8n-n8n.upzdzd.easypanel.host/webhook/chat";
+  const UID_STORAGE_KEY = "inuzem_uid";
+
+  function getUID(){
+    let uid = localStorage.getItem(UID_STORAGE_KEY);
+    if(!uid){
+      uid = "u_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+      localStorage.setItem(UID_STORAGE_KEY, uid);
+    }
+    return uid;
+  }
+
+  const sheet = document.getElementById("sheet");
+  const msgs  = document.getElementById("msgs");
+  const input = document.getElementById("text");
+
+  function toggleChat(force){
+    const open = sheet.classList.contains("open");
+    const willOpen = (force===true) || (!open && force!==false);
+    sheet.classList[ willOpen ? "add" : "remove" ]("open");
+    if (willOpen) setTimeout(()=>input.focus(), 120);
+  }
+
+  function addMsg(text, who="bot"){
+    const div = document.createElement("div");
+    div.className = "msg " + (who==="me"?"me":(who==="sys"?"sys":"bot"));
+    div.textContent = text;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  async function sendMsg(e){
+    e.preventDefault();
+    const text = input.value.trim();
+    if(!text) return;
+    addMsg(text, "me");
+    input.value = "";
+
+    try{
+      const res = await fetch(WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type":"application/json" },
+        body: JSON.stringify({ uid: getUID(), chatInput: text })
+      });
+
+      if(res.status === 429){
+        const err = await res.json().catch(()=>({message:"Çok fazla istek. Lütfen biraz sonra deneyin."}));
+        addMsg(err.message || "Çok fazla istek. Lütfen 1 dakika sonra tekrar deneyin.", "sys");
+        return;
+      }
+
+      const data = await res.json().catch(()=>({}));
+      addMsg((data.reply || "").toString() || "Yanıt alınamadı.", "bot");
+    }catch(err){
+      console.error(err);
+      addMsg("Bağlantı hatası. Lütfen tekrar deneyin.", "sys");
+    }
+  }
+</script>
+</body>
+</html>
