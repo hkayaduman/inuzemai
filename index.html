@@ -92,63 +92,84 @@
   </div>
 
   <script>
-    function toggleChat(force){
-      const sheet=document.getElementById('sheet');
-      if(force===false){sheet.classList.remove('open');}
-      else{sheet.classList.toggle('open');}
+  function toggleChat(force){
+    const sheet=document.getElementById('sheet');
+    if(force===false){sheet.classList.remove('open');}
+    else{sheet.classList.toggle('open');}
+  }
+
+  function showTyping(container){
+    const wrap=document.createElement('div');
+    wrap.className='typing';
+    wrap.setAttribute('aria-label','Yanıt yazılıyor');
+    wrap.innerHTML='<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+    container.appendChild(wrap);
+    container.scrollTop=container.scrollHeight;
+    return wrap;
+  }
+
+  async function sendMsg(e){
+    e.preventDefault();
+
+    const input=document.getElementById('text');
+    const text=input.value.trim();
+    if(!text) return;
+
+    const msgs=document.getElementById('msgs');
+
+    // Kullanıcı mesajı
+    const u=document.createElement('div');
+    u.className='msg user';
+    u.textContent=text; // düz metin
+    msgs.appendChild(u);
+    input.value='';
+
+    const typingEl=showTyping(msgs);
+
+    // Zaman aşımı ayarı
+    const controller=new AbortController();
+    const t=setTimeout(()=>controller.abort(),15000);
+
+    try{
+      const res=await fetch('https://n8n-n8n.upzdzd.easypanel.host/webhook/chat',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({uid:'test-user',chatInput:text}),
+        signal:controller.signal
+      });
+      clearTimeout(t);
+
+      if(!res.ok) throw new Error('HTTP '+res.status);
+
+      // JSON bekleniyor; değilse yakala
+      let data;
+      try{ data=await res.json(); }
+      catch{ throw new Error('Geçersiz yanıt'); }
+
+      typingEl.remove();
+
+      const b=document.createElement('div');
+      b.className='msg bot';
+      b.textContent = (data && data.reply) ? String(data.reply) : '⚠️ Yanıt alınamadı.';
+      msgs.appendChild(b);
+    }catch(err){
+      clearTimeout(t);
+      typingEl.remove();
+
+      const b=document.createElement('div');
+      b.className='msg bot';
+      b.textContent = err.name==='AbortError'
+        ? '⏱️ İstek zaman aşımına uğradı.'
+        : '❌ Sunucuya bağlanılamadı.';
+      msgs.appendChild(b);
+      console.error(err);
     }
 
-    
+    msgs.scrollTop=msgs.scrollHeight;
+  }
+</script>
 
-    function showTyping(container){
-      const wrap=document.createElement('div');
-      wrap.className='typing';
-      wrap.setAttribute('aria-label','Yanıt yazılıyor');
-      wrap.innerHTML='<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
-      container.appendChild(wrap);
-      container.scrollTop=container.scrollHeight;
-      return wrap;
-    }
-
-    async function sendMsg(e){
-      e.preventDefault();
-      const input=document.getElementById('text');
-      const text=input.value.trim();
-      if(!text) return;
-
-      const msgs=document.getElementById('msgs');
-
-      const u=document.createElement('div');
-      u.className='msg user';
-      u.textContent=text;
-      msgs.appendChild(u);
-      input.value='';
-
-      const typingEl=showTyping(msgs);
-
-      try{
-        const res=await fetch('https://n8n-n8n.upzdzd.easypanel.host/webhook/chat',{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({uid:'test-user',chatInput:text})
-        });
-        const data=await res.json();
-
-        typingEl.remove();
-        const b=document.createElement('div');
-        b.className='msg bot';
-        b.textContent=data.reply ? safeText(data.reply) : '⚠️ Yanıt alınamadı.';
-        msgs.appendChild(b);
-      }catch(err){
-        typingEl.remove();
-        const b=document.createElement('div');
-        b.className='msg bot';
-        b.textContent='❌ Sunucuya bağlanılamadı.';
-        msgs.appendChild(b);
-      }
-      msgs.scrollTop=msgs.scrollHeight;
-    }
-  </script>
 </body>
 </html>
+
 
