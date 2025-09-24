@@ -98,14 +98,7 @@
       else{sheet.classList.toggle('open');}
     }
 
-    function safeText(s){
-      return String(s)
-        .replaceAll('&','&amp;')
-        .replaceAll('<','&lt;')
-        .replaceAll('>','&gt;')
-        .replaceAll('"','&quot;')
-        .replaceAll("'",'&#39;');
-    }
+    
 
     function showTyping(container){
       const wrap=document.createElement('div');
@@ -158,3 +151,4 @@
   </script>
 </body>
 </html>
+
