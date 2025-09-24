@@ -108,6 +108,15 @@
     return wrap;
   }
 
+  // Yanıtları sadeleştir
+  function toPlain(s){
+    return String(s)
+      .replace(/^\s*[*•]\s+/gm,'- ')   // * veya • → -
+      .replace(/[*_`#>]/g,'')          // markdown işaretlerini sil
+      .replace(/\n{3,}/g,'\n\n')       // fazla boş satırı sadeleştir
+      .trim();
+  }
+
   async function sendMsg(e){
     e.preventDefault();
 
@@ -120,47 +129,37 @@
     // Kullanıcı mesajı
     const u=document.createElement('div');
     u.className='msg user';
-    u.textContent=text; // düz metin
+    u.textContent=text;
     msgs.appendChild(u);
     input.value='';
 
     const typingEl=showTyping(msgs);
 
-    // Zaman aşımı ayarı
-    const controller=new AbortController();
-    const t=setTimeout(()=>controller.abort(),15000);
-
     try{
       const res=await fetch('https://n8n-n8n.upzdzd.easypanel.host/webhook/chat',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({uid:'test-user',chatInput:text}),
-        signal:controller.signal
+        body:JSON.stringify({uid:'test-user',chatInput:text})
       });
-      clearTimeout(t);
 
       if(!res.ok) throw new Error('HTTP '+res.status);
 
-      // JSON bekleniyor; değilse yakala
-      let data;
-      try{ data=await res.json(); }
-      catch{ throw new Error('Geçersiz yanıt'); }
+      const data=await res.json();
 
       typingEl.remove();
 
       const b=document.createElement('div');
       b.className='msg bot';
-      b.textContent = (data && data.reply) ? String(data.reply) : '⚠️ Yanıt alınamadı.';
+
+      const raw=(data && data.reply) ? String(data.reply) : '⚠️ Yanıt alınamadı.';
+      b.textContent=toPlain(raw);
+
       msgs.appendChild(b);
     }catch(err){
-      clearTimeout(t);
       typingEl.remove();
-
       const b=document.createElement('div');
       b.className='msg bot';
-      b.textContent = err.name==='AbortError'
-        ? '⏱️ İstek zaman aşımına uğradı.'
-        : '❌ Sunucuya bağlanılamadı.';
+      b.textContent='❌ Sunucuya bağlanılamadı.';
       msgs.appendChild(b);
       console.error(err);
     }
@@ -169,7 +168,9 @@
   }
 </script>
 
+
 </body>
 </html>
+
 
 
