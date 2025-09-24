@@ -1,167 +1,73 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>INUZEM AI Chatbot</title>
   <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f4f7f9;
+    :root{
+      --teal:#0a6d7c;
+      --bot-bg:#e0f7fa;
+      --bot-fg:#004d40;
+    }
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f4f7f9}
+
+    /* Panel */
+    .sheet{
+      position:fixed;right:32px;bottom:120px;width:360px;max-height:520px;
+      background:#fff;border-radius:16px;box-shadow:0 6px 25px rgba(0,0,0,.25);
+      display:none;flex-direction:column;overflow:hidden;animation:fadeIn .25s ease;z-index:10000
+    }
+    .sheet.open{display:flex}
+    .top{background:var(--teal);color:#fff;padding:12px;display:flex;align-items:center;justify-content:space-between}
+    .title{font-weight:700;font-size:14px}
+    .close{background:none;border:0;color:#fff;font-size:20px;cursor:pointer}
+    .msgs{flex:1;padding:10px;overflow-y:auto;font-size:14px}
+    .msg{margin:6px 0;padding:8px 12px;border-radius:12px;max-width:80%;word-wrap:break-word;white-space:pre-wrap}
+    .msg.bot{background:var(--bot-bg);color:var(--bot-fg);align-self:flex-start}
+    .msg.user{background:var(--teal);color:#fff;align-self:flex-end}
+
+    .composer{display:flex;border-top:1px solid #ddd}
+    .composer input{flex:1;padding:10px;border:0;outline:0}
+    .composer button{background:var(--teal);border:0;color:#fff;padding:0 16px;cursor:pointer}
+
+    /* Floating glow image button */
+    .fab-wrap{position:fixed;right:24px;bottom:24px;z-index:9999}
+    .fab{background:transparent;border:0;cursor:pointer;padding:0;width:96px;height:96px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+    .fab img{
+      width:100%;height:100%;object-fit:contain;border-radius:50%;
+      box-shadow:0 0 25px rgba(0,255,255,.7),0 0 50px rgba(0,200,255,.6),0 0 75px rgba(0,150,255,.5);
+      animation:glowPulse 2.5s infinite ease-in-out
     }
 
-    /* Chat panel */
-    .sheet {
-      position: fixed;
-      bottom: 120px;
-      right: 32px;
-      width: 360px;
-      max-height: 520px;
-      background: #fff;
-      border-radius: 16px;
-      box-shadow: 0 6px 25px rgba(0, 0, 0, 0.25);
-      display: none;
-      flex-direction: column;
-      overflow: hidden;
-      animation: fadeIn 0.3s ease;
-      z-index: 10000;
+    /* Typing dots */
+    .typing{
+      background:var(--bot-bg);color:var(--bot-fg);align-self:flex-start;
+      display:inline-flex;gap:6px;padding:8px 12px;border-radius:12px;align-items:center
     }
-    .sheet.open {
-      display: flex;
+    .dot{
+      width:6px;height:6px;border-radius:50%;background:var(--teal);opacity:.35;
+      animation:dot 1.2s infinite ease-in-out
     }
+    .dot:nth-child(2){animation-delay:.15s}
+    .dot:nth-child(3){animation-delay:.3s}
 
-    .sheet .top {
-      background: #0a6d7c;
-      color: #fff;
-      padding: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+    @keyframes dot{
+      0%{transform:translateY(0);opacity:.35}
+      25%{transform:translateY(-3px);opacity:.9}
+      50%{transform:translateY(0);opacity:.55}
+      100%{transform:translateY(0);opacity:.35}
     }
-
-    .sheet .title {
-      font-weight: bold;
-      font-size: 14px;
+    @keyframes glowPulse{
+      0%{transform:scale(1);box-shadow:0 0 20px rgba(0,255,255,.6),0 0 40px rgba(0,200,255,.5),0 0 60px rgba(0,150,255,.4)}
+      50%{transform:scale(1.08);box-shadow:0 0 35px rgba(0,255,255,.9),0 0 70px rgba(0,200,255,.7),0 0 100px rgba(0,150,255,.6)}
+      100%{transform:scale(1);box-shadow:0 0 20px rgba(0,255,255,.6),0 0 40px rgba(0,200,255,.5),0 0 60px rgba(0,150,255,.4)}
     }
-
-    .sheet .close {
-      background: none;
-      border: none;
-      color: #fff;
-      font-size: 20px;
-      cursor: pointer;
-    }
-
-    .msgs {
-      flex: 1;
-      padding: 10px;
-      overflow-y: auto;
-      font-size: 14px;
-    }
-
-    .msg {
-      margin: 6px 0;
-      padding: 8px 12px;
-      border-radius: 12px;
-      max-width: 80%;
-    }
-
-    .msg.bot {
-      background: #e0f7fa;
-      color: #004d40;
-      align-self: flex-start;
-    }
-
-    .msg.user {
-      background: #0a6d7c;
-      color: #fff;
-      align-self: flex-end;
-    }
-
-    .composer {
-      display: flex;
-      border-top: 1px solid #ddd;
-    }
-
-    .composer input {
-      flex: 1;
-      padding: 10px;
-      border: none;
-      outline: none;
-    }
-
-    .composer button {
-      background: #0a6d7c;
-      border: none;
-      color: white;
-      padding: 0 16px;
-      cursor: pointer;
-    }
-
-    /* Floating button with glowing image */
-    .fab-wrap {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      z-index: 9999;
-    }
-
-    .fab {
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      padding: 0;
-      width: 90px;
-      height: 90px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .fab img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      border-radius: 50%;
-      box-shadow: 0 0 25px rgba(0, 255, 255, 0.7),
-                  0 0 50px rgba(0, 200, 255, 0.6),
-                  0 0 75px rgba(0, 150, 255, 0.5);
-      animation: glowPulse 2.5s infinite ease-in-out;
-    }
-
-    @keyframes glowPulse {
-      0% {
-        transform: scale(1);
-        box-shadow: 0 0 20px rgba(0, 255, 255, 0.6),
-                    0 0 40px rgba(0, 200, 255, 0.5),
-                    0 0 60px rgba(0, 150, 255, 0.4);
-      }
-      50% {
-        transform: scale(1.1);
-        box-shadow: 0 0 35px rgba(0, 255, 255, 0.9),
-                    0 0 70px rgba(0, 200, 255, 0.7),
-                    0 0 100px rgba(0, 150, 255, 0.6);
-      }
-      100% {
-        transform: scale(1);
-        box-shadow: 0 0 20px rgba(0, 255, 255, 0.6),
-                    0 0 40px rgba(0, 200, 255, 0.5),
-                    0 0 60px rgba(0, 150, 255, 0.4);
-      }
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    @keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
   </style>
 </head>
 <body>
-  <h1 style="text-align:center; padding: 40px; color:#0a6d7c;">
-    İNUZEM AI Destek Landing Page
-  </h1>
+  <h1 style="text-align:center;padding:40px;color:var(--teal);">İNUZEM AI Destek</h1>
 
   <!-- Chat panel -->
   <div id="sheet" class="sheet" aria-live="polite">
@@ -178,58 +84,77 @@
     </form>
   </div>
 
-  <!-- Floating Button -->
+  <!-- Floating Button (upload your image as inuzemai.gif or change src) -->
   <div class="fab-wrap">
     <button class="fab" id="fab" title="INUZEM AI Destek" onclick="toggleChat()">
-      <img src="inuzemai.gif" alt="Inuzem AI" />
+      <img src="inuzemai.gif" alt="Inuzem AI"/>
     </button>
   </div>
 
   <script>
-    function toggleChat(force) {
-      const sheet = document.getElementById("sheet");
-      if (force === false) {
-        sheet.classList.remove("open");
-      } else {
-        sheet.classList.toggle("open");
-      }
+    function toggleChat(force){
+      const sheet=document.getElementById('sheet');
+      if(force===false){sheet.classList.remove('open');}
+      else{sheet.classList.toggle('open');}
     }
 
-    async function sendMsg(event) {
-      event.preventDefault();
-      const input = document.getElementById("text");
-      const msg = input.value.trim();
-      if (!msg) return;
+    function safeText(s){
+      return String(s)
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'",'&#39;');
+    }
 
-      const msgs = document.getElementById("msgs");
-      const userMsg = document.createElement("div");
-      userMsg.className = "msg user";
-      userMsg.innerText = msg;
-      msgs.appendChild(userMsg);
-      input.value = "";
+    function showTyping(container){
+      const wrap=document.createElement('div');
+      wrap.className='typing';
+      wrap.setAttribute('aria-label','Yanıt yazılıyor');
+      wrap.innerHTML='<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+      container.appendChild(wrap);
+      container.scrollTop=container.scrollHeight;
+      return wrap;
+    }
 
-      // Bot cevabı placeholder
-      const botMsg = document.createElement("div");
-      botMsg.className = "msg bot";
-      botMsg.innerText = "⏳ Yanıtlanıyor...";
-      msgs.appendChild(botMsg);
+    async function sendMsg(e){
+      e.preventDefault();
+      const input=document.getElementById('text');
+      const text=input.value.trim();
+      if(!text) return;
 
-      msgs.scrollTop = msgs.scrollHeight;
+      const msgs=document.getElementById('msgs');
 
-      try {
-        const res = await fetch("https://n8n-n8n.upzdzd.easypanel.host/webhook/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ uid: "test-user", chatInput: msg })
+      const u=document.createElement('div');
+      u.className='msg user';
+      u.textContent=text;
+      msgs.appendChild(u);
+      input.value='';
+
+      const typingEl=showTyping(msgs);
+
+      try{
+        const res=await fetch('https://n8n-n8n.upzdzd.easypanel.host/webhook/chat',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({uid:'test-user',chatInput:text})
         });
-        const data = await res.json();
-        botMsg.innerText = data.reply || "⚠️ Bir yanıt alınamadı.";
-      } catch (err) {
-        botMsg.innerText = "❌ Sunucuya bağlanılamadı.";
+        const data=await res.json();
+
+        typingEl.remove();
+        const b=document.createElement('div');
+        b.className='msg bot';
+        b.textContent=data.reply ? safeText(data.reply) : '⚠️ Yanıt alınamadı.';
+        msgs.appendChild(b);
+      }catch(err){
+        typingEl.remove();
+        const b=document.createElement('div');
+        b.className='msg bot';
+        b.textContent='❌ Sunucuya bağlanılamadı.';
+        msgs.appendChild(b);
       }
+      msgs.scrollTop=msgs.scrollHeight;
     }
   </script>
 </body>
 </html>
-
-
