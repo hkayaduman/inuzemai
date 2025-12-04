@@ -136,7 +136,8 @@
     const typingEl=showTyping(msgs);
 
     try{
-      const res=await fetch('https://inuzemyz.inonu.edu.tr/webhook-test/chat',{
+      const CHAT_URL = 'http://inuzemyz.inonu.edu.tr:5678/webhook/chat';
+      const res=await fetch(CHAT_URL,{
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({uid:'test-user',chatInput:text})
@@ -171,6 +172,7 @@
 
 </body>
 </html>
+
 
 
 
