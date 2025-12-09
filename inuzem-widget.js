@@ -1,0 +1,239 @@
+(function () {
+  // Avoid double-initialization if script is added twice
+  if (document.getElementById('inuzem-ai-sheet')) return;
+
+  // 1) Inject CSS
+  const style = document.createElement('style');
+  style.textContent = `
+  /* Container */
+  .inuzem-ai-sheet{
+    position:fixed;right:32px;bottom:120px;width:360px;max-height:520px;
+    background:#ffffff;border-radius:16px;box-shadow:0 6px 25px rgba(0,0,0,.25);
+    display:none;flex-direction:column;overflow:hidden;animation:inuzemFadeIn .25s ease;
+    z-index:10000;font-family:Arial,Helvetica,sans-serif;
+  }
+  .inuzem-ai-sheet.inuzem-open{display:flex}
+
+  .inuzem-ai-top{
+    background:#0a6d7c;color:#ffffff;padding:12px;
+    display:flex;align-items:center;justify-content:space-between;font-size:14px;
+  }
+  .inuzem-ai-title{font-weight:700}
+  .inuzem-ai-close{
+    background:none;border:0;color:#ffffff;font-size:20px;cursor:pointer;
+  }
+
+  .inuzem-ai-msgs{
+    flex:1;padding:10px;overflow-y:auto;font-size:14px;background:#f4f7f9;
+    display:flex;flex-direction:column;
+  }
+  .inuzem-ai-msg{
+    margin:6px 0;padding:8px 12px;border-radius:12px;max-width:80%;
+    word-wrap:break-word;white-space:pre-wrap;
+  }
+  .inuzem-ai-msg--bot{
+    background:#e0f7fa;color:#004d40;align-self:flex-start;
+  }
+  .inuzem-ai-msg--user{
+    background:#0a6d7c;color:#ffffff;align-self:flex-end;margin-left:auto;
+  }
+
+  .inuzem-ai-composer{
+    display:flex;border-top:1px solid #dddddd;background:#ffffff;
+  }
+  .inuzem-ai-input{
+    flex:1;padding:10px;border:0;outline:0;font-size:14px;
+  }
+  .inuzem-ai-send{
+    background:#0a6d7c;border:0;color:#ffffff;padding:0 16px;
+    cursor:pointer;font-size:14px;
+  }
+
+  /* Floating button */
+  .inuzem-ai-fab-wrap{position:fixed;right:24px;bottom:24px;z-index:9999}
+  .inuzem-ai-fab{
+    background:transparent;border:0;cursor:pointer;padding:0;width:96px;height:96px;
+    border-radius:50%;display:flex;align-items:center;justify-content:center;
+  }
+  .inuzem-ai-fab img{
+    width:100%;height:100%;object-fit:contain;border-radius:50%;
+    box-shadow:0 0 25px rgba(0,255,255,.7),0 0 50px rgba(0,200,255,.6),0 0 75px rgba(0,150,255,.5);
+    animation:inuzemGlowPulse 2.5s infinite ease-in-out;
+  }
+
+  /* Typing indicator */
+  .inuzem-ai-typing{
+    background:#e0f7fa;color:#004d40;align-self:flex-start;
+    display:inline-flex;gap:6px;padding:8px 12px;border-radius:12px;align-items:center;
+  }
+  .inuzem-ai-dot{
+    width:6px;height:6px;border-radius:50%;background:#0a6d7c;opacity:.35;
+    animation:inuzemDot 1.2s infinite ease-in-out;
+  }
+  .inuzem-ai-dot:nth-child(2){animation-delay:.15s}
+  .inuzem-ai-dot:nth-child(3){animation-delay:.3s}
+
+  @keyframes inuzemDot{
+    0%{transform:translateY(0);opacity:.35}
+    25%{transform:translateY(-3px);opacity:.9}
+    50%{transform:translateY(0);opacity:.55}
+    100%{transform:translateY(0);opacity:.35}
+  }
+  @keyframes inuzemGlowPulse{
+    0%{transform:scale(1);box-shadow:0 0 20px rgba(0,255,255,.6),0 0 40px rgba(0,200,255,.5),0 0 60px rgba(0,150,255,.4)}
+    50%{transform:scale(1.08);box-shadow:0 0 35px rgba(0,255,255,.9),0 0 70px rgba(0,200,255,.7),0 0 100px rgba(0,150,255,.6)}
+    100%{transform:scale(1);box-shadow:0 0 20px rgba(0,255,255,.6),0 0 40px rgba(0,200,255,.5),0 0 60px rgba(0,150,255,.4)}
+  }
+  @keyframes inuzemFadeIn{
+    from{opacity:0;transform:translateY(20px)}
+    to{opacity:1;transform:translateY(0)}
+  }
+  `;
+  document.head.appendChild(style);
+
+  // 2) Inject HTML (chat panel + floating button)
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = `
+  <!-- Chat panel -->
+  <div id="inuzem-ai-sheet" class="inuzem-ai-sheet" aria-live="polite">
+    <div class="inuzem-ai-top">
+      <div class="inuzem-ai-title">İNUZEM Hızlı Destek</div>
+      <button type="button" class="inuzem-ai-close" aria-label="Kapat"
+              id="inuzem-ai-close-btn">×</button>
+    </div>
+    <div id="inuzem-ai-msgs" class="inuzem-ai-msgs">
+      <div class="inuzem-ai-msg inuzem-ai-msg--bot">
+        Merhaba 👋 Ben Inuzem Hızlı Destek Asistanıyım. INUZEM hizmetleri, programları ve uzaktan eğitim konusunda yardımcı olabilirim.
+      </div>
+    </div>
+    <form class="inuzem-ai-composer" id="inuzem-ai-form">
+      <input id="inuzem-ai-input" class="inuzem-ai-input"
+            autocomplete="off" placeholder="Sorunuzu yazın…" />
+      <button type="submit" class="inuzem-ai-send">Gönder</button>
+    </form>
+  </div>
+
+  <!-- Floating button -->
+  <div class="inuzem-ai-fab-wrap">
+    <button type="button" class="inuzem-ai-fab" title="INUZEM AI Destek"
+            id="inuzem-ai-fab-btn">
+      <img src="https://hkayaduman.github.io/inuzemai/inuzemchatbotlogo.png" alt="INUZEM AI">
+    </button>
+  </div>
+  `;
+  document.body.appendChild(wrapper);
+
+  // 3) JS logic (same as your <script> but adapted)
+  const INUZEM_CHAT_URL = 'https://inuzemyz.inonu.edu.tr/webhook/inuzemchatbot';
+
+  function getInuzemUid() {
+    try {
+      const key = 'inuzem_ai_uid';
+      let uid = localStorage.getItem(key);
+      if (!uid) {
+        uid = 'web-' + Math.random().toString(36).slice(2) +
+              '-' + Date.now().toString(36);
+        localStorage.setItem(key, uid);
+      }
+      return uid;
+    } catch (_) {
+      return 'web-anon';
+    }
+  }
+
+  function inuzemToPlain(s) {
+    return String(s)
+      .replace(/^\s*[*•]\s+/gm,'- ')
+      .replace(/[*_`#>]/g,'')
+      .replace(/\n{3,}/g,'\n\n')
+      .trim();
+  }
+
+  function inuzemShowTyping(container) {
+    const wrap = document.createElement('div');
+    wrap.className = 'inuzem-ai-typing';
+    wrap.setAttribute('aria-label','Yanıt yazılıyor');
+    wrap.innerHTML = '<span class="inuzem-ai-dot"></span><span class="inuzem-ai-dot"></span><span class="inuzem-ai-dot"></span>';
+    container.appendChild(wrap);
+    container.scrollTop = container.scrollHeight;
+    return wrap;
+  }
+
+  function inuzemToggleSheet(force) {
+    const sheet = document.getElementById('inuzem-ai-sheet');
+    if (!sheet) return;
+    if (force === false) {
+      sheet.classList.remove('inuzem-open');
+    } else {
+      sheet.classList.toggle('inuzem-open');
+    }
+  }
+
+  async function inuzemSendMsg(e) {
+    e.preventDefault();
+    const input = document.getElementById('inuzem-ai-input');
+    const text = input.value.trim();
+    if (!text) return;
+
+    const msgs = document.getElementById('inuzem-ai-msgs');
+
+    const u = document.createElement('div');
+    u.className = 'inuzem-ai-msg inuzem-ai-msg--user';
+    u.textContent = text;
+    msgs.appendChild(u);
+    input.value = '';
+
+    const typingEl = inuzemShowTyping(msgs);
+
+    try {
+      const res = await fetch(INUZEM_CHAT_URL, {
+        method: 'POST',
+        body: new URLSearchParams({
+          uid: getInuzemUid(),
+          chatInput: text
+        })
+      });
+
+      let data = null;
+      try { data = await res.json(); } catch (_) {}
+
+      typingEl.remove();
+
+      const b = document.createElement('div');
+      b.className = 'inuzem-ai-msg inuzem-ai-msg--bot';
+
+      if (res.status === 429 && data && data.message) {
+        b.textContent = data.message;
+      } else if (res.ok && data && data.reply) {
+        b.textContent = inuzemToPlain(String(data.reply));
+      } else {
+        b.textContent = '⚠️ Yanıt alınamadı.';
+      }
+
+      msgs.appendChild(b);
+    } catch (err) {
+      typingEl.remove();
+      const b = document.createElement('div');
+      b.className = 'inuzem-ai-msg inuzem-ai-msg--bot';
+      b.textContent = '❌ Sunucuya bağlanılamadı.';
+      msgs.appendChild(b);
+      console.error(err);
+    }
+
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  // 4) Wire up events
+  document.getElementById('inuzem-ai-form')
+    .addEventListener('submit', inuzemSendMsg);
+
+  document.getElementById('inuzem-ai-fab-btn')
+    .addEventListener('click', function () { inuzemToggleSheet(); });
+
+  document.getElementById('inuzem-ai-close-btn')
+    .addEventListener('click', function () { inuzemToggleSheet(false); });
+
+  // Optional: export to window if you want to call manually
+  window.inuzemToggleSheet = inuzemToggleSheet;
+  window.inuzemSendMsg = inuzemSendMsg;
+})();
