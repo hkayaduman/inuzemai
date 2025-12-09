@@ -103,7 +103,7 @@
     </div>
     <div id="inuzem-ai-msgs" class="inuzem-ai-msgs">
       <div class="inuzem-ai-msg inuzem-ai-msg--bot">
-        Merhaba Babus 👋 Ben Inuzem Hızlı Destek Asistanıyım. INUZEM hizmetleri, programları ve uzaktan eğitim konusunda yardımcı olabilirim.
+        Merhaba 👋 Ben Inuzem Hızlı Destek Asistanıyım. INUZEM hizmetleri, programları ve uzaktan eğitim konusunda yardımcı olabilirim.
       </div>
     </div>
     <form class="inuzem-ai-composer" id="inuzem-ai-form">
@@ -237,4 +237,5 @@
   window.inuzemToggleSheet = inuzemToggleSheet;
   window.inuzemSendMsg = inuzemSendMsg;
 })();
+
 
