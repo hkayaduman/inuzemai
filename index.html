@@ -8,11 +8,29 @@
   <center></center><h1>INONU Server</h1></center>
   
   
-<script src="https://raw.githubusercontent.com/hkayaduman/inuzemai/main/inuzem-widget.js" defer></script>
+<div id="inuzem-chatbot"></div>
+
+  <!-- Widget script -->
+  <script src="https://raw.githubusercontent.com/hkayaduman/inuzemai/main/inuzem-widget.js" defer></script>
+
+  <!-- Initialization (example, depends on the widget API) -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      if (typeof InuzemWidget !== "undefined") {
+        InuzemWidget.init({
+          container: "#inuzem-chatbot",
+          theme: "light"
+        });
+      } else {
+        console.error("Chatbot script not loaded or InuzemWidget not defined.");
+      }
+    });
+  </script>
 
 
 </body>
 </html>
+
 
 
 
