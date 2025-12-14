@@ -124,7 +124,7 @@
   document.body.appendChild(wrapper);
 
   // 3) JS logic (same as your <script> but adapted)
-  const INUZEM_CHAT_URL = 'https://inuzemyz.inonu.edu.tr/webhook/inuzemchatbot';
+  const INUZEM_CHAT_URL = 'https://inuzemyz.inonu.edu.tr/webhook/chatbot';
 
   function getInuzemUid() {
     try {
@@ -237,5 +237,6 @@
   window.inuzemToggleSheet = inuzemToggleSheet;
   window.inuzemSendMsg = inuzemSendMsg;
 })();
+
 
 
